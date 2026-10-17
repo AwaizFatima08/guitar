@@ -1,0 +1,5 @@
+node_modules/
+.secrets/
+scripts/backup.log
+.claude/settings.local.json
+.DS_Store

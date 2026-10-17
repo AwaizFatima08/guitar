@@ -1,0 +1,16 @@
+{
+  "name": "Geetar: learn guitar",
+  "short_name": "Geetar",
+  "description": "Learn guitar from zero: tuner, lessons in three levels, chords, songs and practice tools. Made for Pari by HomiLabs.",
+  "start_url": "./",
+  "scope": "./",
+  "display": "standalone",
+  "orientation": "any",
+  "background_color": "#fff8f1",
+  "theme_color": "#e2557d",
+  "icons": [
+    { "src": "img/icon-192.png", "sizes": "192x192", "type": "image/png" },
+    { "src": "img/icon-512.png", "sizes": "512x512", "type": "image/png" },
+    { "src": "img/icon-maskable-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" }
+  ]
+}

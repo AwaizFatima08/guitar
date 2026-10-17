@@ -1,0 +1,10 @@
+{
+  "name": "geetar",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "description": "Geetar: a guitar learning web app by HomiLabs, dedicated to Pari.",
+  "scripts": {
+    "test": "node --test tests/*.test.js"
+  }
+}

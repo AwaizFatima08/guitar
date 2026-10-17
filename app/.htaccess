@@ -1,0 +1,8 @@
+# Geetar on Hostinger (tools.homilabs.org/guitar_app/)
+AddType application/manifest+json .webmanifest
+<IfModule mod_headers.c>
+  <Files "sw.js">
+    Header set Cache-Control "no-cache"
+  </Files>
+  Header set Permissions-Policy "microphone=(self)"
+</IfModule>
