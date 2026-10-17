@@ -124,7 +124,21 @@ label.slider output { min-width: 32px; font-variant-numeric: tabular-nums; }
 .hero h1 { margin: 0; }
 .hero p { margin: 2px 0; color: var(--muted); }
 .hero-logo { border-radius: 22px; box-shadow: var(--shadow); flex: none; }
-.hero .dedic { color: var(--plum); font-weight: 800; }
+.hero .dedic, .welcome .dedic { color: var(--plum); font-weight: 800; margin-top: 4px; }
+.hero-title { font-size: clamp(34px, 9vw, 44px); letter-spacing: -0.02em; }
+.greet { margin: 14px 0 4px; font-size: 17px; color: var(--muted); }
+.greet b { color: var(--text); }
+body.welcome-mode .tabbar { display: none; }
+body.welcome-mode { padding-bottom: 0; }
+.welcome { text-align: center; padding-top: 28px; }
+.welcome-logo { border-radius: 28px; box-shadow: var(--shadow); }
+.welcome h1 { font-size: 42px; margin: 14px 0 0; }
+.welcome .card { text-align: left; }
+.welcome-label { display: flex; flex-direction: column; gap: 8px; font-weight: 800; font-size: 18px; }
+.welcome-label input { font-size: 20px; min-height: 52px; }
+.welcome .btn-wide { margin-top: 8px; min-height: 52px; font-size: 18px; }
+.btn:disabled { opacity: .45; cursor: not-allowed; }
+.welcome-foot { display: flex; justify-content: center; margin-top: 28px; }
 .continue { background: linear-gradient(135deg, color-mix(in srgb, var(--accent) 14%, var(--surface)), var(--surface)); }
 .continue h2 { margin: 6px 0 2px; }
 .card-kicker { display: flex; align-items: center; gap: 6px; font-weight: 800; font-size: 14px; color: var(--muted); }

@@ -1,6 +1,6 @@
 # Geetar
 
-A guitar-learning web app for complete beginners, made by HomiLabs and **dedicated to Pari**.
+A guitar-learning app for complete beginners, made by HomiLabs and **dedicated to Pari**: on the web (no ads) and on Android (Google Play, AdMob ads). No login: just enter a name.
 
 Live at **https://tools.homilabs.org/guitar_app/** (after upload, see below).
 
@@ -32,6 +32,12 @@ Node 18+ runs the pitch detector against synthetic guitar plucks and checks that
 bash scripts/deploy-to-tools-site.sh
 ```
 This copies `app/` into `/mnt/storage/projects/homilabs_tools/site/guitar_app/`. Then upload that folder, including its hidden `.htaccess`, to `public_html/guitar_app/` of tools.homilabs.org in Hostinger's File Manager. After any change to app files, raise `CACHE` in `app/sw.js` and `VERSION` in `app/js/app.js` so installed copies update.
+
+## Android app
+```bash
+bash mobile/scripts/build_release.sh
+```
+Builds the signed Play bundle with the real AdMob ids into `releases/`. Add `apk` for a test APK. See `CLAUDE.md` and `docs/play-console-listing-kit.md`.
 
 ## Backup
 ```bash

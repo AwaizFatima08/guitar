@@ -3,3 +3,8 @@ node_modules/
 scripts/backup.log
 .claude/settings.local.json
 .DS_Store
+releases/
+mobile/build/
+mobile/.dart_tool/
+mobile/assets/web/
+mobile/android/build/

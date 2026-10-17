@@ -1,2 +1,9 @@
 node_modules/
 .claude/settings.local.json
+mobile/build/
+mobile/.dart_tool/
+mobile/android/.gradle/
+mobile/android/app/build/
+mobile/android/build/
+mobile/android/local.properties
+mobile/assets/web/

@@ -6,7 +6,29 @@ import { chordDiagram, tabDiagram, guitarParts, handDiagram, fretboard } from '.
 import { detectPitch, describeReading, Smoother, centsOff } from './pitch.js';
 import { startMic, stopMic, micErrorText } from './mic.js';
 
-export const VERSION = '1.0.0';
+export const VERSION = '1.1.0';
+
+// ---------- Android app bridge ----------
+// Inside the Play Store app the page is served from 127.0.0.1 by the Flutter shell, which adds a
+// JavaScript channel (GeetarNative) and a boot file with saved progress and app settings.
+const IN_APP = location.hostname === '127.0.0.1' && !!window.GeetarNative;
+let APP = { ads: false, privacyOptions: false, version: VERSION };
+let bootState = null;
+if (IN_APP) {
+  try {
+    const t = new URLSearchParams(location.search).get('t') || '';
+    const r = await fetch(`__geetar/boot.json?t=${encodeURIComponent(t)}`, { cache: 'no-store' });
+    const b = await r.json();
+    APP = { ...APP, ...(b.app || {}) };
+    bootState = b.state ? JSON.parse(b.state) : null;
+  } catch (e) { /* boot file missing: run like the web version */ }
+}
+// The shell calls this after the ads consent step, e.g. to show the "Ad privacy choices" button.
+window.__geetarApp = (o) => { Object.assign(APP, o || {}); if (/^#\/about/.test(location.hash)) render(); };
+function native(type, data = {}) {
+  if (!IN_APP) return;
+  try { window.GeetarNative.postMessage(JSON.stringify({ type, ...data })); } catch (e) { /* ignore */ }
+}
 
 // ---------- tiny DOM helper ----------
 function h(tag, props = {}, ...kids) {
@@ -26,10 +48,19 @@ const icon = (name) => h('span', { class: `ico ico-${name}`, 'aria-hidden': 'tru
 
 // ---------- storage ----------
 const KEY = 'geetar.v1';
-const defaults = () => ({ name: 'Pari', goal: 10, theme: 'auto', done: {}, checks: {}, best: {}, history: {}, days: {}, timerStart: null });
+const defaults = () => ({ name: '', onboarded: false, goal: 10, theme: 'auto', done: {}, checks: {}, best: {}, history: {}, days: {}, timerStart: null });
 let S = defaults();
-try { S = { ...defaults(), ...JSON.parse(localStorage.getItem(KEY) || '{}') }; } catch (e) { /* storage blocked: keep defaults */ }
-function save() { try { localStorage.setItem(KEY, JSON.stringify(S)); } catch (e) { /* ignore */ } }
+try {
+  const raw = localStorage.getItem(KEY);
+  // The app shell keeps a copy of the progress, in case the WebView storage is ever cleared.
+  S = { ...defaults(), ...(raw ? JSON.parse(raw) : bootState || {}) };
+  if (!raw && bootState) localStorage.setItem(KEY, JSON.stringify(S)); // restored from the app's copy
+} catch (e) { /* storage blocked: keep defaults */ }
+function save() {
+  const json = JSON.stringify(S);
+  try { localStorage.setItem(KEY, json); } catch (e) { /* ignore */ }
+  native('save', { state: json });
+}
 const dayKey = (d = new Date()) => `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
 function addActivity(secs = 0) {
   const k = dayKey();
@@ -92,7 +123,12 @@ function render() {
     if (m) { view = fn(...m.slice(1)); tab = t; break; }
   }
   if (!view) { view = pageHome(); tab = 'home'; }
+  if (!S.onboarded) { view = pageWelcome(); tab = 'welcome'; }
+  document.body.classList.toggle('welcome-mode', tab === 'welcome');
   main.replaceChildren(view.node);
+  // Banner ads (Android app only) are allowed on menu screens, never where you play or tune.
+  const menuScreens = ['#/', '#', '', '#/home', '#/learn', '#/practice', '#/songs', '#/glossary'];
+  native('page', { route: hash, banner: S.onboarded && (menuScreens.includes(hash) || /^#\/level\//.test(hash)) });
   document.title = view.title ? `${view.title} · Geetar` : 'Geetar: learn guitar';
   document.querySelectorAll('.tabbar a').forEach((a) => a.toggleAttribute('aria-current', a.dataset.tab === tab));
   window.scrollTo(0, 0);
@@ -120,6 +156,31 @@ function toast(msg) {
   setTimeout(() => t.remove(), 2700);
 }
 
+// ---------- WELCOME (first start) ----------
+function pageWelcome() {
+  const nameIn = h('input', { type: 'text', maxlength: 20, placeholder: 'Your name', 'aria-label': 'Your name', autocomplete: 'given-name' });
+  const go = h('button', { class: 'btn btn-primary btn-wide', disabled: true }, 'Let’s play! 🎸');
+  nameIn.addEventListener('input', () => { go.disabled = !nameIn.value.trim(); });
+  const start = () => {
+    if (!nameIn.value.trim()) return;
+    S.name = nameIn.value.trim(); S.onboarded = true; save();
+    location.hash = '#/'; render();
+  };
+  go.addEventListener('click', start);
+  nameIn.addEventListener('keydown', (e) => { if (e.key === 'Enter') start(); });
+  setTimeout(() => nameIn.focus(), 50);
+  return { title: 'Welcome', node: h('div', { class: 'page welcome' },
+    h('img', { class: 'welcome-logo', src: 'img/geetar.svg', alt: 'Geetar logo', width: 112, height: 112 }),
+    h('h1', {}, 'Geetar'),
+    h('p', { class: 'dedic' }, '💜 Made with Love for Pari'),
+    h('p', { class: 'lead' }, 'Learn guitar from zero: a tuner, step-by-step lessons, chords, songs and practice games. No music knowledge needed.'),
+    h('section', { class: 'card' },
+      h('label', { class: 'welcome-label' }, 'What should we call you?', nameIn),
+      h('p', { class: 'muted small' }, 'Just your first name or a nickname. No account and no sign-in: it stays on this device.'),
+      go),
+    h('div', { class: 'welcome-foot' }, credits())) };
+}
+
 // ---------- HOME ----------
 function pageHome() {
   const nl = nextLesson();
@@ -144,9 +205,9 @@ function pageHome() {
     h('section', { class: 'hero' },
       h('img', { class: 'hero-logo', src: 'img/geetar.svg', alt: '', width: 84, height: 84 }),
       h('div', {},
-        h('h1', {}, `Hi ${S.name || 'there'}! 👋`),
-        h('p', {}, 'Ready to play? Tune up, then pick up where you left off.'),
-        h('p', { class: 'dedic' }, '💜 Made with love for Pari'))),
+        h('h1', { class: 'hero-title' }, 'Geetar'),
+        h('p', { class: 'dedic' }, '💜 Made with Love for Pari'))),
+    h('p', { class: 'greet' }, h('b', {}, `Hi ${S.name || 'there'}! 👋`), ' Ready to play? Tune up, then pick up where you left off.'),
     nl ? h('a', { class: 'card continue', href: `#/lesson/${nl.id}` },
       h('div', { class: 'card-kicker' }, S.done.b1 ? 'Continue' : 'Start here', ' · ', levelChip(nl.level)),
       h('h2', {}, nl.title), h('p', {}, nl.goal),
@@ -214,7 +275,11 @@ function pageLesson(id) {
   const updDone = () => { doneBtn.textContent = S.done[id] ? '✓ Lesson done (tap to undo)' : 'Mark lesson as done'; doneBtn.classList.toggle('is-done', !!S.done[id]); };
   doneBtn.addEventListener('click', () => {
     if (S.done[id]) delete S.done[id];
-    else { S.done[id] = dayKey(); addActivity(0); celebrate(l); }
+    else {
+      S.done[id] = dayKey(); addActivity(0); celebrate(l);
+      // The app shell decides (with its own caps) whether a short ad may follow a finished lesson.
+      native('lessonDone', { id, doneToday: Object.values(S.done).filter((d) => d === dayKey()).length });
+    }
     save(); updDone();
   });
   updDone();
@@ -906,18 +971,18 @@ let installEvt = null;
 window.addEventListener('beforeinstallprompt', (e) => { e.preventDefault(); installEvt = e; });
 function pageAbout() {
   const nameIn = h('input', { type: 'text', value: S.name, maxlength: 20, 'aria-label': 'Your name' });
-  nameIn.addEventListener('change', () => { S.name = nameIn.value.trim() || 'Pari'; save(); toast('Saved'); });
+  nameIn.addEventListener('change', () => { S.name = nameIn.value.trim(); save(); toast('Saved'); });
   const goalSel = h('select', { 'aria-label': 'Daily goal' }, ...[5, 10, 15, 20, 30].map((m) => h('option', { value: m, selected: m === S.goal }, `${m} minutes a day`)));
   goalSel.addEventListener('change', () => { S.goal = +goalSel.value; save(); });
   const themeSel = h('select', { 'aria-label': 'Theme' }, ...[['auto', 'Match my device'], ['light', 'Light'], ['dark', 'Dark']].map(([v, l]) => h('option', { value: v, selected: v === S.theme }, l)));
   themeSel.addEventListener('change', () => { S.theme = themeSel.value; save(); applyTheme(); });
-  const installBtn = h('button', { class: 'btn btn-primary', hidden: !installEvt }, '⬇ Install Geetar on this device');
+  const installBtn = h('button', { class: 'btn btn-primary', hidden: !installEvt || IN_APP }, '⬇ Install Geetar on this device');
   installBtn.addEventListener('click', async () => { if (!installEvt) return; installEvt.prompt(); await installEvt.userChoice; installEvt = null; installBtn.hidden = true; });
   const reset = h('button', { class: 'btn btn-danger' }, 'Reset all progress');
-  reset.addEventListener('click', () => { if (confirm('Delete all lessons done, scores and practice history on this device?')) { const keep = { name: S.name, goal: S.goal, theme: S.theme }; S = { ...defaults(), ...keep }; save(); toast('Progress reset'); render(); } });
+  reset.addEventListener('click', () => { if (confirm('Delete all lessons done, scores and practice history on this device?')) { const keep = { name: S.name, onboarded: S.onboarded, goal: S.goal, theme: S.theme }; S = { ...defaults(), ...keep }; save(); toast('Progress reset'); render(); } });
   const totalMin = Math.round(Object.values(S.days).reduce((a, d) => a + d.secs, 0) / 60);
   const node = h('div', { class: 'page about' },
-    h('section', { class: 'about-hero' }, h('img', { src: 'img/geetar.svg', alt: 'Geetar logo', width: 96, height: 96 }), h('h1', {}, 'Geetar'), h('p', { class: 'muted' }, `Learn guitar from zero · version ${VERSION}`)),
+    h('section', { class: 'about-hero' }, h('img', { src: 'img/geetar.svg', alt: 'Geetar logo', width: 96, height: 96 }), h('h1', {}, 'Geetar'), h('p', { class: 'muted' }, `Learn guitar from zero · version ${APP.version}`)),
     h('section', { class: 'card dedication' },
       h('div', { class: 'heart' }, '💜'),
       h('h2', {}, 'Dedicated to Pari'),
@@ -927,9 +992,13 @@ function pageAbout() {
         stat(Object.keys(S.done).length, 'lessons done'), stat(streak(), 'day streak'), stat(totalMin, 'minutes practised'), stat(Object.keys(S.days).length, 'days played'))),
     h('section', { class: 'card settings' }, h('h3', {}, 'Settings'),
       h('label', {}, 'Name on the home screen', nameIn), h('label', {}, 'Daily practice goal', goalSel), h('label', {}, 'Theme', themeSel),
-      installBtn, h('p', { class: 'muted small' }, 'On iPhone or iPad: tap Share, then “Add to Home Screen”. After the first visit Geetar works offline.')),
+      installBtn, IN_APP ? null : h('p', { class: 'muted small' }, 'On iPhone or iPad: tap Share, then “Add to Home Screen”. After the first visit Geetar works offline.')),
     h('section', { class: 'card' }, h('h3', {}, 'Privacy'),
-      h('p', { class: 'small' }, 'Geetar has no accounts, no ads and no tracking. Your progress is saved only in this browser on this device. The microphone is used only by the tuner and Play along; the sound is analysed on your device and is never recorded or sent anywhere.'),
+      h('p', { class: 'small' }, IN_APP
+        ? 'Geetar has no accounts and no sign-in. Your name and progress are saved only on this phone. The microphone is used only by the tuner and Play along; the sound is analysed on the phone and is never recorded or sent anywhere. The app is free thanks to Google AdMob ads, limited to family-friendly content. Google may use your device’s advertising ID; you can change your ad choices below.'
+        : 'Geetar has no accounts, no ads and no tracking. Your progress is saved only in this browser on this device. The microphone is used only by the tuner and Play along; the sound is analysed on your device and is never recorded or sent anywhere.'),
+      APP.privacyOptions ? h('button', { class: 'btn', onclick: () => native('privacyOptions') }, 'Ad privacy choices') : null,
+      h('p', { class: 'small' }, h('a', { href: 'https://tools.homilabs.org/privacy#geetar' }, 'Full privacy policy'), ' · ', h('a', { href: 'https://tools.homilabs.org/terms#geetar' }, 'Terms')),
       reset),
     h('section', { class: 'card made-by' }, credits(),
       h('p', { class: 'muted small' }, 'All songs in Geetar are traditional or in the public domain. Guitar sounds are generated by the app itself.'),
@@ -941,8 +1010,15 @@ const stat = (n, l) => h('div', { class: 'stat' }, h('b', {}, String(n)), h('sma
 // ---------- boot ----------
 applyTheme();
 render();
-if ('serviceWorker' in navigator && location.protocol !== 'file:') {
+if ('serviceWorker' in navigator && location.protocol !== 'file:' && !IN_APP) {
   navigator.serviceWorker.register('./sw.js').catch(() => { /* offline support is optional */ });
 }
+// In the app, links to the web or email open outside the app.
+document.addEventListener('click', (e) => {
+  const a = e.target.closest && e.target.closest('a[href]');
+  if (!a || !IN_APP) return;
+  const href = a.getAttribute('href');
+  if (/^(https?:|mailto:)/.test(href)) { e.preventDefault(); native('open', { url: href }); }
+});
 // Unlock audio on the first touch (iOS needs a gesture).
 window.addEventListener('pointerdown', () => audioCtx(), { once: true });

@@ -1,5 +1,5 @@
 // Geetar service worker: cache everything so the app works offline after the first visit.
-const CACHE = 'geetar-v1.0.0';
+const CACHE = 'geetar-v1.1.0';
 const FILES = [
   './', 'index.html', 'manifest.webmanifest', 'css/app.css',
   'js/app.js', 'js/music.js', 'js/lessons.js', 'js/audio.js', 'js/pluck.js', 'js/pitch.js', 'js/mic.js', 'js/diagrams.js',

@@ -41,7 +41,7 @@ export function micErrorText(err) {
   const m = String(err && (err.name || err.message || err));
   if (m.includes('insecure')) return 'The microphone only works when the app is opened over https:// (or on this computer). Open the app from its web address.';
   if (m.includes('unsupported')) return 'This browser cannot use the microphone. Try Chrome, Edge, Safari or Firefox.';
-  if (m.includes('NotAllowed') || m.includes('Permission')) return 'The microphone was blocked. Allow it in your browser’s site settings (the lock icon next to the address), then press Start again.';
+  if (m.includes('NotAllowed') || m.includes('Permission')) return location.hostname === '127.0.0.1' ? 'The microphone is switched off for Geetar. Allow it in your phone’s Settings → Apps → Geetar → Permissions, then press Start again.' : 'The microphone was blocked. Allow it in your browser’s site settings (the lock icon next to the address), then press Start again.';
   if (m.includes('NotFound')) return 'No microphone was found on this device.';
   return 'The microphone could not start: ' + m;
 }
