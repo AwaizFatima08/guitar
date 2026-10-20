@@ -1,0 +1,34 @@
+🎸 Always wanted to learn guitar? Start today, even if you know nothing about music.
+
+Geetar is a free guitar course for complete beginners, made by HomiLabs. It was built for one young learner who just got her first guitar, and now it's here for everyone. 💜 Made with Love for Pari.
+
+🎯 A tuner in plain words: "too low, tighten" or "too high, loosen"
+📚 27 short lessons in three levels: Basic, Medium and Expert
+🎵 Songs in tab with Play along: the app listens and moves on when you play the right note
+🖐️ 29 chords you can hear, plus a metronome, a strumming trainer and practice games
+🔥 Practice timer, daily goal and streak
+🙅 No account and no sign-in: just enter your name
+
+📲 Scan the QR code on the poster, or install from Google Play:
+https://play.google.com/store/apps/details?id=com.homilabs.geetar
+
+Prefer the browser? Try it at https://tools.homilabs.org/guitar_app/
+
+Know someone who just got a guitar? Tag them or share this post. Feedback is very welcome in the comments.
+
+#Guitar #LearnGuitar #GuitarForBeginners #GuitarLessons #MusicEducation #Geetar #HomiLabs
+
+---- Urdu (short) ----
+🎸 گٹار سیکھنا چاہتے ہیں؟ آج ہی شروع کریں، چاہے آپ کو موسیقی کا کچھ بھی علم نہ ہو۔
+
+Geetar بالکل نئے سیکھنے والوں کے لیے ایک مفت ایپ ہے: آسان الفاظ میں ٹیونر، تین درجوں میں 27 مختصر اسباق، کورڈز، گانے اور پریکٹس کے کھیل۔ کوئی اکاؤنٹ نہیں، بس اپنا نام لکھیں۔
+
+📲 پوسٹر پر QR کوڈ اسکین کریں یا گوگل پلے سے انسٹال کریں:
+https://play.google.com/store/apps/details?id=com.homilabs.geetar
+
+#گٹار #Geetar #HomiLabs
+
+---- Files ----
+Feed post (Facebook / Instagram, 4:5): homilabs-promo-geetar.png
+Story / WhatsApp status (9:16): homilabs-story-geetar.png
+Sources: _src/fb-promo-geetar.html, _src/story-promo-geetar.html, _src/qr-geetar-play.svg (QR decodes to the Play link)
